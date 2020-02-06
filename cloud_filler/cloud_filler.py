@@ -4,7 +4,6 @@ import numba
 from numba import types
 from numba.typed import Dict
 from functools import partial
-import dask.array as da
 
 # TODO: make jit and regular versions of functions for debugging.
 
@@ -15,6 +14,7 @@ def similarity_threshold(image, nclasses):
     """
     :param image: A 3D array where the first dim is the band
     :param nclasses: Number of land cover classes present in image. Empirical.
+
     """
     nbands = image.shape[0]
     return np.nansum(np.nanstd(image, axis=(1, 2)) * 2.0 / nclasses, axis=0) / nbands
@@ -24,12 +24,22 @@ def find_init_window_size(min_similar_pix):
     return np.int((np.sqrt(min_similar_pix) + 1) / 2) * 2 + 1
 
 
-def _pad_arrays(array, idx_window_center):
+def _pad_array(array, pad_width):
+    """Pads a 3d array along its 1st and 2nd axes with np.nan.
+
+    This kind of padding is intended for multiband images data.
+
+    :param array: A 3D array to pad.
+    :type array: np.array
+    :param padding: Distance to pad.
+    :type padding: int
+    
+    """
     return np.stack(
         [
             np.pad(
                 array[i].copy(),
-                pad_width=idx_window_center,
+                pad_width=pad_width,
                 mode="constant",
                 constant_values=np.nan,
             )
@@ -39,7 +49,7 @@ def _pad_arrays(array, idx_window_center):
 
 
 @numba.jit(nopython=True)
-def _square_window_decimated(target_image, input_image, index, window_size=5, step=2):
+def _square_window_decimated(target_image, input_image, index, window_size, step):
     i, j = index
 
     # can_be_decimated = window_size//2%step # TODO only allow these window sizes?
@@ -87,6 +97,7 @@ def _window_rmsd(input_window):
 
 @numba.jit(nopython=True)
 def _window_gaussian(input_window):
+    """Not multiband."""
     bands, x, y = input_window.shape
     window_size = x  # Assumes a square window
     window_center_x, window_center_y = _window_center(window_size)
@@ -111,6 +122,7 @@ def _window_gaussian(input_window):
 
 @numba.jit(nopython=True)
 def _absolute_difference(input_window):
+    """Not multiband."""
     bands, x, y = input_window.shape
     window_size = x  # Assumes a square window
     window_center_x, window_center_y = _window_center(window_size)
@@ -173,15 +185,15 @@ def _interpolator(
     input_window,
     similarity_threshold,
     similarity,
-    prediction_to_use="combined",
+    prediction_method="combined",
 ):
     """target_window must have the same dimensions as the input_window.
     
     :param similarity: An array the shape of the window where the values
     reflect degree of similarity to the target pixel.
-    :param prediction_to_use: One of 'first', 'second', 'combined'.  'first'
+    :param prediction_method: One of 'spatial', 'temporal', 'combined'.  'spatial'
     is the prediction derived only from similar pixels in the target_window.
-    'second' is the prediction derived from the difference between the similar
+    'temporal' is the prediction derived from the difference between the similar
     pixels in the target and the input windows.  'combined' is a weighted average
     of the two predictions.
     """
@@ -193,7 +205,9 @@ def _interpolator(
     dist = np.square(_window_distance(window_size))
 
     # Mask the input window where target window is masked
-    similarity_masked = np.where(np.isnan(target_window)[0], np.nan, similarity)
+    similarity_masked = np.where(
+        np.isnan(target_window)[0], np.nan, similarity
+    )  # TODO: write a union_nulls function
 
     # Find pixels that are similar enough
     similar_pixels = np.where(
@@ -201,7 +215,7 @@ def _interpolator(
     )
 
     # TODO: the two lines below are from the nNSPI algorithm not the original paper.
-    # dist = (dist - np.nanmin(dist)) / (np.nanmax(dist) - np.nanmin(dist)) + 1
+    dist = (dist - np.nanmin(dist)) / (np.nanmax(dist) - np.nanmin(dist) + 1e-10) + 1
     similar_pixels = (similar_pixels - np.nanmin(similar_pixels)) / (
         np.nanmax(similar_pixels) - np.nanmin(similar_pixels) + 1e-10
     ) + 1
@@ -227,7 +241,9 @@ def _interpolator(
     value2 = center_vals + np.sum(value2, axis=1)
 
     # Find the window's homogenaity
-    homogenaity = np.nanmean(similarity)
+    homogenaity = np.nanmean(
+        similarity
+    )  # TODO: the center value in similarity is still present.
 
     # Degree of change between input and target windows
     radiometric_change = np.nanmean(np.sqrt(np.sum(np.square(change), axis=0) / bands))
@@ -243,9 +259,9 @@ def _interpolator(
     # Compute the final value
     value = weight1 * value1 + weight2 * value2
 
-    if prediction_to_use == "first":
+    if prediction_method == "spatial":
         return value1
-    elif prediction_to_use == "second":
+    elif prediction_method == "temporal":
         return value2
     else:
         return value
@@ -261,6 +277,7 @@ def _interpolate(
     min_num_similar_pix,
     window_sizes,
     max_effective_window_size,
+    prediction_method,
 ):
 
     # Create an image that will collect the fill values.
@@ -287,11 +304,7 @@ def _interpolate(
             ):
 
                 # Expand the window size from min to max until enough similar pixels are found.
-                for (
-                    window_size
-                ) in (
-                    window_size_to_step.keys()
-                ):  # range(min_window_size, max_window_size, 4): #
+                for window_size in window_size_to_step.keys():
 
                     target_window, input_window = _square_window_decimated(
                         padded_target_image,
@@ -319,7 +332,7 @@ def _interpolate(
                             input_window,
                             similarity_threshold,
                             rmsd,
-                            "combined",
+                            prediction_method,
                         )
                         break  # No need to look farther out with bigger windows.
                     else:  # Contine the loop with an expanded window size
@@ -331,7 +344,7 @@ def _interpolate(
                             input_window,
                             similarity_threshold,
                             rmsd,
-                            "combined",
+                            prediction_method,
                         )
                     else:
                         # Compute change from common pixel and use as fill value.
@@ -346,6 +359,7 @@ def nspi(
     window_sizes=range(5, 89, 2),
     max_effective_window_size=30,
     min_num_similar_pix=20,
+    prediction_method="combined",
 ):
     """Fills the target image using the nearest similar pixel interpolator (NSPI).
 
@@ -379,14 +393,19 @@ def nspi(
     :type max_effective_window_size: int
     :param min_num_similar_pix: The minimum number of similar pixels to find
         before predicting the missing pixel.
+    :param prediction_method: One of 'spatial', 'temporal', 'combined'.  'spatial'
+    is the prediction derived only from similar pixels in the target_window.
+    'temporal' is the prediction derived from the difference between the similar
+    pixels in the target and the input windows.  'combined' is a weighted average
+    of the two predictions.
+    :type prediction_method: string
     
     """
-    window_sizes = list(window_sizes)
 
-    target_image = target_image.astype(
-        np.float64
-    )  # TODO: change to float32, it should be faster
-    input_image = input_image.astype(np.float64)
+    # Casting inputs
+    window_sizes = list(window_sizes)
+    target_image = target_image.astype(np.float32)
+    input_image = input_image.astype(np.float32)
 
     # Original image dimensions
     bands, x, y = target_image.shape
@@ -396,18 +415,19 @@ def nspi(
     )  # TODO: this is recomputed multiple times.
 
     # Pad input images with the max window size
-    padded_target_image = _pad_arrays(target_image, max_window_center_idx)
-    padded_input_image = _pad_arrays(input_image, max_window_center_idx)
+    padded_target_image = _pad_array(target_image, max_window_center_idx)
+    padded_input_image = _pad_array(input_image, max_window_center_idx)
 
     filled_image = _interpolate(
         padded_target_image,
         padded_input_image,
-        x,
         y,
+        x,
         similarity_threshold,
         min_num_similar_pix,
         window_sizes,
         max_effective_window_size,
+        prediction_method,
     )
 
     filled_image = filled_image[

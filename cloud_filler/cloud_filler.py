@@ -10,9 +10,22 @@ from functools import partial
 ########################################################################################################################
 # Helper functions
 ########################################################################################################################
-def similarity_threshold(image, nclasses):
+def _propgate_nan_through_bands(array):
+    """If any value is np.nan along axis 0 then np.nan is propogated to
+    the rest of the indices along axis.
+    
     """
-    :param image: A 3D array where the first dim is the band
+    # TODO: It would be nice to generalize this to work on any axis.
+    array_nans = np.sum(array, axis=0)  # Propogate nans
+    array = np.where(np.isnan(array_nans), np.nan, array)
+    return array
+
+
+def find_similarity_threshold(image, nclasses):
+    """Estimates the similarity threshold.
+
+    :param image: A 3D array where the first dim is the band.  Usually this is
+    the input image, i.e. the image used to find similar pixels.
     :param nclasses: Number of land cover classes present in image. Empirical.
 
     """
@@ -21,6 +34,7 @@ def similarity_threshold(image, nclasses):
 
 
 def find_init_window_size(min_similar_pix):
+    """Finds an initial window size where the min_similar_pix can be found."""
     return np.int((np.sqrt(min_similar_pix) + 1) / 2) * 2 + 1
 
 
@@ -382,7 +396,7 @@ def nspi(
     :type input_image: np.array
     :param similarity_threshold: How similar (RMSD) pixels should be to be
         used as predictors of the missing pixel.  If None, the threshold is
-        automatically estimated.
+        automatically estimated with 5 classes.
     :type similarity_threshold: int
     :param window_sizes: A collection of window sizes to iterate through while
         searching for the minimum number of similar pixels.
@@ -401,11 +415,17 @@ def nspi(
     :type prediction_method: string
     
     """
+    if not similarity_threshold:
+        similarity_threshold = find_similarity_threshold(input_image, 5)
 
     # Casting inputs
     window_sizes = list(window_sizes)
     target_image = target_image.astype(np.float32)
     input_image = input_image.astype(np.float32)
+
+    # Unify nodata mask, all bands should share a mask
+    target_image = _propgate_nan_through_bands(target_image)
+    input_image = _propgate_nan_through_bands(input_image)
 
     # Original image dimensions
     bands, x, y = target_image.shape

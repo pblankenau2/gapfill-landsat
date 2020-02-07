@@ -217,8 +217,8 @@ def test_multiband_filling_similarity_threshold(
 ###############################################################################
 
 
-def test_similarity_threshold(target_multiband_image):
-    assert cloud_filler.similarity_threshold(
+def test_find_similarity_threshold(target_multiband_image):
+    assert cloud_filler.find_similarity_threshold(
         target_multiband_image, 3
     ) == pytest.approx(0.0599, abs=0.0001)
 
@@ -325,3 +325,22 @@ def test__can_downsample():
 
 def test__find_step_size():
     assert cloud_filler._find_step_size(101, 30) == 5
+
+
+def test__propgate_nan_through_axis():
+    x = np.arange(3 * 3 * 2).reshape(2, 3, 3).astype(np.float32)
+    x[0, 0, 0] = np.nan
+    x[1, 1, 1] = np.nan
+    # TODO: turn x into a fixture?
+
+    oracle = np.array(
+        [
+            [[np.nan, 1.0, 2.0], [3.0, np.nan, 5.0], [6.0, 7.0, 8.0]],
+            [[np.nan, 10.0, 11.0], [12.0, np.nan, 14.0], [15.0, 16.0, 17.0]],
+        ],
+        dtype=np.float32,
+    )
+    assert np.allclose(
+        cloud_filler._propgate_nan_through_bands(x), oracle, equal_nan=True
+    )
+

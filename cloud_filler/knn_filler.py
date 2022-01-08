@@ -10,10 +10,10 @@ Say you use two images before and two after the target, and 3 bands per image
 These images will have to be selected based on whether they have valid pixels where the target is missing
 Actually not true. We need to select similar pixels where valid data exists in the target image.
 It's the valid pixels in the target image that we'll use to fill missing pixels.
-Do all images will need to be loaded into memory at once?
+Do all images need to be loaded into memory at once? No, see KNNImputer
 """
 X = [[0], [1], [2], [3]]
-y = [0, 0, 1, 1]
+y = [[0, 3], [0, 3], [1, 4], [1, 4]]
 
 neigh = KNeighborsRegressor(n_neighbors=2).fit(X, y)
 

@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 
-"""Tests for `cloud_filler` package."""
+"""Tests for `gapfill_landsat` package."""
 
 import pytest
 import numpy as np
 
 
-from cloud_filler import cloud_filler  # TODO: import should be relative?
+from gapfill_landsat import gapfill_landsat  # TODO: import should be relative?
 
 
 @pytest.fixture
@@ -81,7 +81,7 @@ def input_null():
 
 
 def test_no_fill_when_both_missing(input_image_center_pixel_missing):
-    output = cloud_filler.nspi(
+    output = gapfill_landsat.nspi(
         input_image_center_pixel_missing,
         input_image_center_pixel_missing,
         similarity_threshold=0.2,
@@ -93,7 +93,7 @@ def test_no_fill_when_both_missing(input_image_center_pixel_missing):
 
 
 def test_no_fill_when_input_missing(input_null, target_image):
-    output = cloud_filler.nspi(
+    output = gapfill_landsat.nspi(
         target_image,
         input_null,
         similarity_threshold=0.2,
@@ -105,7 +105,7 @@ def test_no_fill_when_input_missing(input_null, target_image):
 
 
 def test_no_fill_when_no_similar_pixels(input_image, target_image):
-    output = cloud_filler.nspi(
+    output = gapfill_landsat.nspi(
         target_image,
         input_image,
         similarity_threshold=0.0001,  # So small there will be no similar pix.
@@ -117,7 +117,7 @@ def test_no_fill_when_no_similar_pixels(input_image, target_image):
 
 
 def test_singleband_spatial_filling(input_image, target_image):
-    output = cloud_filler.nspi(
+    output = gapfill_landsat.nspi(
         target_image,
         input_image,
         similarity_threshold=0.1,
@@ -130,7 +130,7 @@ def test_singleband_spatial_filling(input_image, target_image):
 
 
 def test_singleband_temporal_filling(input_image, target_image):
-    output = cloud_filler.nspi(
+    output = gapfill_landsat.nspi(
         target_image,
         input_image,
         similarity_threshold=0.1,
@@ -143,7 +143,7 @@ def test_singleband_temporal_filling(input_image, target_image):
 
 
 def test_singleband_combined_filling(input_image, target_image):
-    output = cloud_filler.nspi(
+    output = gapfill_landsat.nspi(
         target_image,
         input_image,
         similarity_threshold=0.1,
@@ -158,7 +158,7 @@ def test_singleband_combined_filling(input_image, target_image):
 def test_expanding_window_filling(
     input_image_distant_similar_pixel, target_image_distant_similar_pixel
 ):
-    output = cloud_filler.nspi(
+    output = gapfill_landsat.nspi(
         target_image_distant_similar_pixel,
         input_image_distant_similar_pixel,
         similarity_threshold=0.1,
@@ -171,7 +171,7 @@ def test_expanding_window_filling(
 
 
 def test_fewer_than_min_sim_pix_filling(input_image, target_image):
-    output = cloud_filler.nspi(
+    output = gapfill_landsat.nspi(
         target_image,
         input_image,
         similarity_threshold=0.1,
@@ -184,7 +184,7 @@ def test_fewer_than_min_sim_pix_filling(input_image, target_image):
 
 
 def test_multiband_filling(input_multiband_image, target_multiband_image):
-    output = cloud_filler.nspi(
+    output = gapfill_landsat.nspi(
         target_multiband_image,
         input_multiband_image,
         similarity_threshold=0.035,  # The similarity of the pixel is ~0.0316
@@ -200,7 +200,7 @@ def test_multiband_filling(input_multiband_image, target_multiband_image):
 def test_multiband_filling_similarity_threshold(
     input_multiband_image, target_multiband_image
 ):
-    output = cloud_filler.nspi(
+    output = gapfill_landsat.nspi(
         target_multiband_image,
         input_multiband_image,
         similarity_threshold=0.03,  # The similarity of the pixel is ~0.0316
@@ -218,13 +218,13 @@ def test_multiband_filling_similarity_threshold(
 
 
 def test_find_similarity_threshold(target_multiband_image):
-    assert cloud_filler.find_similarity_threshold(
+    assert gapfill_landsat.find_similarity_threshold(
         target_multiband_image, 3
     ) == pytest.approx(0.0599, abs=0.0001)
 
 
 def test_find_init_window_size():
-    assert cloud_filler.find_init_window_size(4) == 3
+    assert gapfill_landsat.find_init_window_size(4) == 3
 
 
 def test__pad_arrays(target_multiband_image):
@@ -252,14 +252,14 @@ def test__pad_arrays(target_multiband_image):
         dtype=np.float32,
     )
     assert np.allclose(
-        cloud_filler._pad_array(target_multiband_image, 1), padded, equal_nan=True
+        gapfill_landsat._pad_array(target_multiband_image, 1), padded, equal_nan=True
     )
 
 
 def test__square_window_decimated(target_multiband_image, input_multiband_image):
-    # target_multiband_image = cloud_filler._pad_array(target_multiband_image, 2)
-    # input_multiband_image = cloud_filler._pad_array(input_multiband_image, 2)
-    t, i = cloud_filler._square_window_decimated(
+    # target_multiband_image = gapfill_landsat._pad_array(target_multiband_image, 2)
+    # input_multiband_image = gapfill_landsat._pad_array(input_multiband_image, 2)
+    t, i = gapfill_landsat._square_window_decimated(
         target_multiband_image,
         input_multiband_image,
         index=(2, 2),
@@ -301,7 +301,7 @@ def test__window_rmsd(input_multiband_image):
         dtype=np.float32,
     )
     assert np.allclose(
-        cloud_filler._window_rmsd(input_multiband_image), oracle, equal_nan=True
+        gapfill_landsat._window_rmsd(input_multiband_image), oracle, equal_nan=True
     )
 
 
@@ -315,16 +315,16 @@ def test__window_distance():
             ]
         ]
     )
-    assert np.allclose(cloud_filler._window_distance(3), oracle)
+    assert np.allclose(gapfill_landsat._window_distance(3), oracle)
 
 
 def test__can_downsample():
-    assert cloud_filler._can_downsample(5, 2) == True
-    assert cloud_filler._can_downsample(9, 3) == False
+    assert gapfill_landsat._can_downsample(5, 2) == True
+    assert gapfill_landsat._can_downsample(9, 3) == False
 
 
 def test__find_step_size():
-    assert cloud_filler._find_step_size(101, 30) == 5
+    assert gapfill_landsat._find_step_size(101, 30) == 5
 
 
 def test__propgate_nan_through_axis():
@@ -341,6 +341,6 @@ def test__propgate_nan_through_axis():
         dtype=np.float32,
     )
     assert np.allclose(
-        cloud_filler._propgate_nan_through_bands(x), oracle, equal_nan=True
+        gapfill_landsat._propgate_nan_through_bands(x), oracle, equal_nan=True
     )
 

@@ -1,0 +1,68 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gapfill-landsat"
+version = "0.1.0"
+authors = [
+  { name="Philip Blankenau", email="philip.blankenau@idwr.idaho.gov" },
+]
+description = "Tools for filling missing data in satellite images caused by sensor malfunctions or masked out clouds."
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Developers",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+dependencies = [
+    "numpy",
+    "pandas",
+    "numba",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "ruff",
+    "tox",
+    "tox-uv",
+    "mkdocs",
+    "mkdocs-material",
+    "bump2version",
+    "twine",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/pblankenau2/gapfill-landsat"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.ruff]
+line-length = 88
+
+[tool.pytest.ini_options]
+addopts = "--cov=src/gapfill-landsat --cov-report=xml"
+
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+minversion = 3.8
+isolated_build = true
+envlist = py38,py39,py310,py311
+
+[testenv]
+deps =
+    pytest
+    pytest-cov
+commands =
+    pytest
+"""

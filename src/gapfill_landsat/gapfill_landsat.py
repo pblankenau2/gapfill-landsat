@@ -35,7 +35,7 @@ def find_similarity_threshold(image, nclasses):
 
 def find_init_window_size(min_similar_pix):
     """Finds an initial window size where the min_similar_pix can be found."""
-    return np.int((np.sqrt(min_similar_pix) + 1) / 2) * 2 + 1
+    return int((np.sqrt(min_similar_pix) + 1) / 2) * 2 + 1
 
 
 def _pad_array(array, pad_width):

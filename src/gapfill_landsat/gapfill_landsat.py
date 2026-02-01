@@ -1,3 +1,4 @@
+"""Module for filling gaps in Landsat 7 SLC-off images using the NSPI algorithm."""
 import math
 import numpy as np
 import numba
@@ -11,10 +12,7 @@ from functools import partial
 # Helper functions
 ########################################################################################################################
 def _propgate_nan_through_bands(array):
-    """If any value is np.nan along axis 0 then np.nan is propogated to
-    the rest of the indices along axis.
-    
-    """
+    """If any value is np.nan along axis 0 then np.nan is propogated to the rest of the indices along axis."""
     # TODO: It would be nice to generalize this to work on any axis.
     array_nans = np.sum(array, axis=0)  # Propogate nans
     array = np.where(np.isnan(array_nans), np.nan, array)
@@ -22,7 +20,7 @@ def _propgate_nan_through_bands(array):
 
 
 def find_similarity_threshold(image, nclasses):
-    """Estimates the similarity threshold.
+    """Estimate the similarity threshold.
 
     :param image: A 3D array where the first dim is the band.  Usually this is
     the input image, i.e. the image used to find similar pixels.
@@ -34,12 +32,12 @@ def find_similarity_threshold(image, nclasses):
 
 
 def find_init_window_size(min_similar_pix):
-    """Finds an initial window size where the min_similar_pix can be found."""
+    """Find an initial window size where the min_similar_pix can be found."""
     return int((np.sqrt(min_similar_pix) + 1) / 2) * 2 + 1
 
 
 def _pad_array(array, pad_width):
-    """Pads a 3d array along its 1st and 2nd axes with np.nan.
+    """Pad a 3d array along its 1st and 2nd axes with np.nan.
 
     This kind of padding is intended for multiband images data.
 
@@ -211,7 +209,6 @@ def _interpolator(
     pixels in the target and the input windows.  'combined' is a weighted average
     of the two predictions.
     """
-
     bands, window_size = input_window.shape[0], input_window.shape[1]
     window_center_x, window_center_y = _window_center(window_size)
 
@@ -375,7 +372,7 @@ def nspi(
     min_num_similar_pix=20,
     prediction_method="combined",
 ):
-    """Fills the target image using the nearest similar pixel interpolator (NSPI).
+    """Fill the target image using the nearest similar pixel interpolator (NSPI).
 
     This function fills np.nan values in the target image.  Any pixels you don't
     want filled should be assigned to another value.  Pixels that you don't

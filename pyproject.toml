@@ -27,8 +27,6 @@ dev = [
     "ruff",
     "tox",
     "tox-uv",
-    "mkdocs",
-    "mkdocs-material",
     "bump2version",
     "twine",
 ]

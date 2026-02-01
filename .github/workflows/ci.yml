@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.11", "3.12"]
 
     steps:
       - uses: actions/checkout@v3
@@ -26,4 +26,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install tox tox-uv
       - name: Test with tox
-        run: tox -e py
+        run: |
+          # Remove dot from python version for tox env name (3.11 -> py311)
+          TOX_ENV="py$(echo ${{ matrix.python-version }} | tr -d .)"
+          tox -e $TOX_ENV

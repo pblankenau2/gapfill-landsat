@@ -5,9 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "gapfill-landsat"
 version = "0.1.0"
-authors = [
-  { name="Philip Blankenau", email="philip.blankenau@idwr.idaho.gov" },
-]
+authors = [{ name = "Philip Blankenau", email = "phil.blankenau@gmail.com" }]
 description = "Tools for filling missing data in satellite images caused by sensor malfunctions or masked out clouds."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -20,10 +18,7 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
 ]
-dependencies = [
-    "numpy",
-    "numba",
-]
+dependencies = ["numpy", "numba"]
 
 [project.optional-dependencies]
 dev = [
@@ -42,7 +37,7 @@ dev = [
 "Homepage" = "https://github.com/pblankenau2/gapfill-landsat"
 
 [tool.setuptools]
-package-dir = {"" = "src"}
+package-dir = { "" = "src" }
 
 [tool.ruff]
 line-length = 88

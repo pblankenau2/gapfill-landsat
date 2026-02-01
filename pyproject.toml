@@ -48,14 +48,14 @@ package-dir = {"" = "src"}
 line-length = 88
 
 [tool.pytest.ini_options]
-addopts = "--cov=src/gapfill-landsat --cov-report=xml"
+addopts = "--cov=src/gapfill_landsat --cov-report=xml"
 
 [tool.tox]
 legacy_tox_ini = """
 [tox]
-minversion = 3.8
+minversion = 3.11
 isolated_build = true
-envlist = py38,py39,py310,py311
+envlist = py311,py312,py313,py314
 
 [testenv]
 deps =

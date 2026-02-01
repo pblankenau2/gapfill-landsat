@@ -1,1 +1,1 @@
-"""Unit test package for cloud_filler."""
+"""Unit test package for gapfill-landsat."""

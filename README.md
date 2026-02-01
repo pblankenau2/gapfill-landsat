@@ -9,7 +9,7 @@ Currently, this package only implements the nearest similar pixel interpolator (
 that was specifically designed to fill the Landsat 7 SLC off gap.  It can also be used to fill
 small areas where clouds have been masked as nodata.
 
-![Landsat 7 SLC off gap filled](docs/assets/example.png)
+![Landsat 7 SLC off gap filled](docs/assets/NSPI3.png)
 
 * Free software: MIT license
 * Documentation: https://pblankenau2.github.io/gapfill-landsat/

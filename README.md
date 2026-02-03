@@ -18,36 +18,18 @@ small areas where clouds have been masked as nodata.
 
 ## Installation
 
-### Stable release
-
-To install `gapfill-landsat`, run this command in your terminal:
-
-```console
-$ uv pip install gapfill-landsat
-```
-
-This is the preferred method to install `gapfill-landsat`, as it will always install the most recent stable release.
-
 ### From sources
 
 The sources for `gapfill-landsat` can be downloaded from the [Github repo](https://github.com/pblankenau2/gapfill-landsat).
 
-You can either clone the public repository:
-
 ```console
-$ git clone git://github.com/pblankenau2/gapfill-landsat
-```
-
-Or download the `tarball`:
-
-```console
-$ curl -OJL https://github.com/pblankenau2/gapfill-landsat/tarball/master
+git clone git://github.com/pblankenau2/gapfill-landsat
 ```
 
 Once you have a copy of the source, you can install it with:
 
 ```console
-$ uv pip install .
+uv pip install .
 ```
 
 ## Usage
@@ -55,7 +37,6 @@ $ uv pip install .
 To use `gapfill-landsat` in a project with `rasterio`:
 
 ```python
-import numpy as np
 import rasterio
 from gapfill_landsat import nspi
 
@@ -79,8 +60,6 @@ with rasterio.open("filled_image.tif", "w", **profile) as dst:
 The `nspi` function accepts several optional parameters to fine-tune the filling process, such as `similarity_threshold`, `window_sizes`, and `prediction_method`. See the source code for detailed documentation.
 
 ## Contributing
-
-Contributions are welcome, and they are greatly appreciated! Every little bit helps, and credit will always be given.
 
 **Please note:** While I am open to contributions, I cannot promise a timely review of pull requests. It is possible that some PRs may not be reviewed at all.
 

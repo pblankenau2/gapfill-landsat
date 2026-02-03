@@ -5,10 +5,10 @@
 
 Tools for filling missing data in satellite images caused by sensor malfunctions or masked out clouds.
 Currently, this package only implements the nearest similar pixel interpolator (NSPI) algorithm
-that was specifically designed to fill the Landsat 7 SLC off gap. It can also be used to fill
+that was specifically designed to fill the Landsat 7 SLC-off gap. It can also be used to fill
 small areas where clouds have been masked as nodata.
 
-![Landsat 7 SLC off gap filled](assets/NSPI3.png)
+![Landsat 7 SLC-off gap filled](assets/NSPI3.png)
 
 * Free software: MIT license
 

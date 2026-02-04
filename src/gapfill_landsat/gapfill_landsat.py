@@ -1,12 +1,12 @@
 """Module for filling gaps in Landsat 7 SLC-off images using the NSPI algorithm."""
-import math
+
 import numpy as np
 import numba
-from numba import types
+from numba import types, prange
 from numba.typed import Dict
-from functools import partial
 
 # TODO: make jit and regular versions of functions for debugging.
+
 
 ########################################################################################################################
 # Helper functions
@@ -45,7 +45,7 @@ def _pad_array(array, pad_width):
     :type array: np.array
     :param padding: Distance to pad.
     :type padding: int
-    
+
     """
     return np.stack(
         [
@@ -200,7 +200,7 @@ def _interpolator(
     prediction_method="combined",
 ):
     """target_window must have the same dimensions as the input_window.
-    
+
     :param similarity: An array the shape of the window where the values
     reflect degree of similarity to the target pixel.
     :param prediction_method: One of 'spatial', 'temporal', 'combined'.  'spatial'
@@ -278,7 +278,7 @@ def _interpolator(
         return value
 
 
-@numba.jit(nopython=True)
+@numba.jit(nopython=True, parallel=True)
 def _interpolate(
     padded_target_image,
     padded_input_image,
@@ -305,7 +305,7 @@ def _interpolate(
     max_window_center_idx = max(window_sizes) // 2
 
     # The indices we want are those where the whole window fits within the image
-    for i in range(max_window_center_idx, image_height + max_window_center_idx):
+    for i in prange(max_window_center_idx, image_height + max_window_center_idx):
         for j in range(max_window_center_idx, image_width + max_window_center_idx):
 
             # Only operate on windows where the target pixel is nan and the input pixel is valid
@@ -410,7 +410,7 @@ def nspi(
     pixels in the target and the input windows.  'combined' is a weighted average
     of the two predictions.
     :type prediction_method: string
-    
+
     """
     if not similarity_threshold:
         similarity_threshold = find_similarity_threshold(input_image, 5)

@@ -1,6 +1,5 @@
 # gapfill-landsat
 
-[![PyPI](https://img.shields.io/pypi/v/gapfill-landsat.svg)](https://pypi.org/project/gapfill-landsat/)
 [![CI](https://github.com/pblankenau2/gapfill-landsat/actions/workflows/ci.yml/badge.svg)](https://github.com/pblankenau2/gapfill-landsat/actions/workflows/ci.yml)
 
 Tools for filling missing data in satellite images caused by sensor malfunctions or masked out clouds.
@@ -38,6 +37,7 @@ To use `gapfill-landsat` in a project with `rasterio`:
 
 ```python
 import rasterio
+import numpy as np
 from gapfill_landsat import nspi
 
 # Open the target Landsat 7 image (with gaps)
@@ -48,6 +48,11 @@ with rasterio.open("tests/data/l7.tif") as src7:
 # Open the source Landsat 8 image (to fill gaps)
 with rasterio.open("tests/data/l8.tif") as src8:
     input_image = src8.read()
+
+# NOTE: Apply the cloud mask Nans from the target image to the input image,
+# but not Nans you want filled (e.g., SLC-off gaps).  This will ensure that
+# clouds in the target image will not be filled.
+input_image = np.where(target_image_clouds, np.nan, input_image)
 
 # Fill the gaps using the NSPI algorithm
 filled_image = nspi(target_image, input_image)
@@ -77,21 +82,21 @@ To set up `gapfill-landsat` for local development:
 2.  Clone your fork locally:
 
     ```console
-    $ git clone git@github.com:your_name_here/gapfill-landsat.git
+    git clone git@github.com:your_name_here/gapfill-landsat.git
     ```
 
 3.  Install your local copy into a virtualenv. Assuming you have `uv` installed:
 
     ```console
-    $ cd gapfill-landsat/
-    $ uv venv
-    $ uv pip install -e .[dev]
+    cd gapfill-landsat/
+    uv venv
+    uv sync --extra dev
     ```
 
 4.  Create a branch for local development:
 
     ```console
-    $ git checkout -b name-of-your-bugfix-or-feature
+    git checkout -b name-of-your-bugfix-or-feature
     ```
 
     Now you can make your changes locally.
@@ -99,15 +104,15 @@ To set up `gapfill-landsat` for local development:
 5.  When you're done making changes, check that your changes pass the tests, including testing other Python versions with `tox`:
 
     ```console
-    $ tox
+    uv run tox
     ```
 
 6.  Commit your changes and push your branch to GitHub:
 
     ```console
-    $ git add .
-    $ git commit -m "Your detailed description of your changes."
-    $ git push origin name-of-your-bugfix-or-feature
+    git add .
+    git commit -m "Your detailed description of your changes."
+    git push origin name-of-your-bugfix-or-feature
     ```
 
 7.  Submit a pull request through the GitHub website.

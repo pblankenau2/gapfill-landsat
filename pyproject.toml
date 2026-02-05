@@ -21,15 +21,7 @@ classifiers = [
 dependencies = ["numpy", "numba"]
 
 [project.optional-dependencies]
-dev = [
-    "pytest",
-    "pytest-cov",
-    "ruff",
-    "tox",
-    "tox-uv",
-    "bump2version",
-    "twine",
-]
+dev = ["pytest", "pytest-cov", "ruff", "tox", "tox-uv", "bump2version", "twine"]
 
 [project.urls]
 "Homepage" = "https://github.com/pblankenau2/gapfill-landsat"
@@ -54,6 +46,7 @@ isolated_build = true
 envlist = py311,py312,py313,py314
 
 [testenv]
+usedevelop = True
 deps =
     pytest
     pytest-cov

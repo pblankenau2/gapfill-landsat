@@ -314,6 +314,8 @@ def _interpolate(
                 padded_input_image[0, i, j]
             ):
 
+                min_num_similar_pix_found = False
+                num_similar_pix = 0
                 # Expand the window size from min to max until enough similar pixels are found.
                 for window_size in window_size_to_step.keys():
 
@@ -333,10 +335,12 @@ def _interpolate(
                     rmsd_masked = np.where(input_window_mask, np.nan, rmsd)
 
                     # Check if min number of similar pixels are present
+                    num_similar_pix = np.sum(rmsd_masked <= similarity_threshold)
                     if (
-                        np.sum(rmsd_masked <= similarity_threshold)
+                        num_similar_pix
                         >= min_num_similar_pix
                     ):
+                        min_num_similar_pix_found = True
                         # Add the predicted pixel value to the fill_image
                         filled_image[:, i, j] = _interpolator(
                             target_window,  # TODO: i and j in correct order?
@@ -348,8 +352,8 @@ def _interpolate(
                         break  # No need to look farther out with bigger windows.
                     else:  # Contine the loop with an expanded window size
                         continue
-                else:  # If the min number of similar pixels was never available.
-                    if np.sum(rmsd_masked <= similarity_threshold) > 0:
+                if not min_num_similar_pix_found:  # If the min number of similar pixels was never available.
+                    if num_similar_pix > 0:
                         filled_image[:, i, j] = _interpolator(
                             target_window,
                             input_window,

@@ -43,14 +43,17 @@ from gapfill_landsat import nspi
 # Open the target Landsat 7 image (with gaps)
 with rasterio.open("tests/data/l7.tif") as src7:
     target_image = src7.read()
+    # NOTE: You'll want to also set cloudy pixels to NaN
+    # because you don't want them to be used to fill missing data.
     profile = src7.profile
     
 # Open the source Landsat 8 image (to fill gaps)
 with rasterio.open("tests/data/l8.tif") as src8:
     input_image = src8.read()
+    # NOTE: You'll want to also set cloudy pixels to NaN
 
-# NOTE: Apply the cloud mask Nans from the target image to the input image,
-# but not Nans you want filled (e.g., SLC-off gaps).  This will ensure that
+# NOTE: Apply the cloud mask NaNs from the target image to the input image,
+# but not NaNs you want filled (e.g., SLC-off gaps).  This will ensure that
 # clouds in the target image will not be filled.
 input_image = np.where(target_image_clouds, np.nan, input_image)
 

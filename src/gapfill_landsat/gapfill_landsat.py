@@ -336,10 +336,7 @@ def _interpolate(
 
                     # Check if min number of similar pixels are present
                     num_similar_pix = np.sum(rmsd_masked <= similarity_threshold)
-                    if (
-                        num_similar_pix
-                        >= min_num_similar_pix
-                    ):
+                    if num_similar_pix >= min_num_similar_pix:
                         min_num_similar_pix_found = True
                         # Add the predicted pixel value to the fill_image
                         filled_image[:, i, j] = _interpolator(
@@ -352,7 +349,9 @@ def _interpolate(
                         break  # No need to look farther out with bigger windows.
                     else:  # Contine the loop with an expanded window size
                         continue
-                if not min_num_similar_pix_found:  # If the min number of similar pixels was never available.
+                if (
+                    not min_num_similar_pix_found
+                ):  # If the min number of similar pixels was never available.
                     if num_similar_pix > 0:
                         filled_image[:, i, j] = _interpolator(
                             target_window,
@@ -383,6 +382,9 @@ def nspi(
     want to fill and you also don't want to be considered as similar pixels
     should be assigned a value far outside the range of values in the image.
 
+    - Note: Apply the cloud mask Nans from the target image to the input image,
+        but not Nans you want filled (e.g., SLC-off gaps).  This will ensure that
+        clouds in the target image will not be filled.
     - Note: -99 has a special meaning in this algorithm and images that contain
       values of -99 will cause issues.
 
